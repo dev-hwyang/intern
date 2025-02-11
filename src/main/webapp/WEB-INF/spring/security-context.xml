@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:security="http://www.springframework.org/schema/security"
+	xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd
+      http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+	<bean id="bcryptPasswordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder" />
+	<bean id="customAccessDenied" class="soft.euclid.intern.controller.security.AccessDenyHandler" /> <!-- 사용자 정의 접근 거부 처리자 빈 -->
+	<bean id="customLoginSuccess" class="soft.euclid.intern.controller.security.LoginSuccessHandler" /> <!-- 로그인 성공 처리자 빈 -->
+	<bean id="UserDetailServiceImpl" class="soft.euclid.intern.service.impl.UserDetailServiceImpl" /> <!-- UserDetailsService 재정의 -->
+	
+	
+	<security:http>
+
+	<security:intercept-url pattern="/" access="hasAnyRole('ROLE_MEMBER', 'ROLE_ADMIN')" />
+	<security:intercept-url pattern="/intern/*" access="hasAnyRole('ROLE_MEMBER', 'ROLE_ADMIN')" />
+	<security:intercept-url pattern="/memberListForAdmin" access="hasRole('ROLE_ADMIN')" />
+	
+		<!-- 폼 기반 인증을 기능을 사용한다. : 시큐리티 기본 폼 인증시 사용 -->
+		<!-- <security:form-login /> -->
+		<security:form-login login-page="/login" authentication-success-handler-ref="customLoginSuccess" />
+
+		<!-- 사용자의 접근 거부 처리자 -->
+		<security:access-denied-handler ref="customAccessDenied" />
+
+		<!-- 자동 로그인 적용; 데이터 소스를 지정하고 테이블을 이용해서 기존 로그인 정보를 기록 - 쿠키의 유효시간은 7일 (604800) -->
+		<security:remember-me data-source-ref="dataSource" token-validity-seconds="604800" />
+		<security:logout logout-url="/logout" invalidate-session="true" delete-cookies="remember-me, JSESSION_ID" />
+<!-- 		<security:logout logout-url="/logout" invalidate-session="true" delete-cookies="JSESSION_ID" /> -->
+
+	</security:http>
+
+	<security:authentication-manager>
+		<!-- 지정한 아이디와 패스워드로 로그인이 가능하도록 설정 -->
+		<security:authentication-provider user-service-ref="UserDetailServiceImpl">
+			<security:password-encoder ref="bcryptPasswordEncoder" />
+		</security:authentication-provider>
+	</security:authentication-manager>
+
+
+</beans>

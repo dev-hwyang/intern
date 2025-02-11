@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:aop="http://www.springframework.org/schema/aop"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:tx="http://www.springframework.org/schema/tx"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans https://www.springframework.org/schema/beans/spring-beans.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-4.3.xsd
+		http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx-4.3.xsd">
+
+	
+	<!-- Root Context: defines shared resources visible to all other web components -->
+	
+	<!-- MyBatis(Maria DB)와 Spring 연결 -->
+	<bean id="dataSource"
+		class="org.springframework.jdbc.datasource.SimpleDriverDataSource">
+		<property name="driverClass" value="org.mariadb.jdbc.Driver" />
+		<property name="url" value="jdbc:mariadb://127.0.0.1:3306/intern" />
+		<property name="username" value="root" />
+		<property name="password" value="java" />
+	</bean>
+	
+    <!-- Mybatis 연동 -->
+    <bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+         <property name="dataSource" ref="dataSource"></property>
+         <property name="configLocation" value="/WEB-INF/mybatisAlias/mybatisAlias.xml"></property>
+         <property name="mapperLocations" value="classpath*:/sqlmap/*_SQL.xml"/>
+    </bean>
+    <bean id="sqlSession" class="org.mybatis.spring.SqlSessionTemplate" destroy-method="clearCache">
+        <constructor-arg name="sqlSessionFactory" ref="sqlSessionFactory"></constructor-arg>
+    </bean>
+	
+	
+	<!-- MultipartFile CommonsMultipartResolver 사용시 -->
+	<bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+		<!-- 하나의 요청 당 파일 업로드 용량(3145728 Byte) -->
+		<property name="maxUploadSize" value="3145728" />
+		<!-- 메모리에 저장되는 최대용량 -->
+		<property name="maxInMemorySize" value="3145728" />
+		<property name="defaultEncoding" value="UTF-8" />
+	</bean>
+	
+<!-- 	<bean id="uploadPath" class="java.lang.String"> -->
+<!-- 		<constructor-arg value="C:\Users\titic\Documents\workspace-sts-3.9.14\.metadata\.plugins\org.eclipse.wst.server.core\tmp0\wtpwebapps\Exercise\resources\upload" /> -->
+<!-- 	</bean> -->
+	
+	
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"></property>
+	</bean>
+	
+	 <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+	 	<property name="basePackage" value="soft.euclid.intern.mapper"/> 
+	 </bean>
+	
+</beans>

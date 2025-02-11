@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="soft.euclid.intern.mapper.MemberMapper">
+
+	<insert id="signup" parameterType="MemberVO">
+		insert into member (
+			mem_id
+			, mem_name
+			, mem_password
+			, mem_reg1
+			, mem_email
+			, mem_tel
+			, mem_addr
+			, mem_agr)
+		VALUES (
+			#{memId}
+			, #{memName}
+			, #{memPassword}
+			, #{memReg1}
+			, #{memEmail}
+			, #{memTel}
+			, #{memAddr}
+			, #{memAgr})
+	</insert>
+
+	<insert id="insertAuth" parameterType="MemberVO">
+		insert into member_auth (
+			mem_id, auth)
+		VALUES (
+			#{memId}, 'ROLE_MEMBER')
+	</insert>
+	
+	<select id="login" parameterType="MemberVO">
+		select
+			mem_id
+			, mem_name
+			, mem_password
+			, mem_reg1
+			, mem_email
+			, mem_tel
+			, mem_addr
+			, mem_agr
+		from member
+		where mem_id = #{username}
+		and mem_password = #{memPassword}
+	</select>
+	
+	<select id="idCheck" parameterType="String" resultType="MemberVO">
+		select
+			mem_id
+			, mem_name
+			, mem_password
+			, mem_reg1
+			, mem_email
+			, mem_tel
+			, mem_addr
+			, mem_agr
+		from member
+		where mem_id = #{memId}
+	</select>
+	
+	<select id="searchlist" parameterType="searchVO" resultType="MemberVO">
+		select
+			member.mem_id
+			, mem_name
+			, mem_password
+			, mem_reg1
+			, mem_email
+			, mem_tel
+			, mem_addr
+			, mem_agr
+			, auth
+		from member, member_auth
+		where member.mem_id = member_auth.mem_id
+		<if test="searchType != null and searchType == 'name'">
+			AND mem_name LIKE CONCAT('%', #{searchWord}, '%')
+		</if>
+		<if test="searchType != null and searchType == 'auth'">
+			AND auth LIKE CONCAT('%', #{searchWord}, '%')
+		</if>
+	</select>
+	
+	<select id="myPage" parameterType="String" resultType="MemberVO">
+		select
+			mem_id
+			, mem_name
+			, mem_password
+			, mem_reg1
+			, mem_email
+			, mem_tel
+			, mem_addr
+			, mem_agr
+			, mem_wd
+			, mem_wd_date
+		from member
+		where mem_id = #{memId}
+	</select>
+	
+	<update id="update" parameterType="MemberVO">
+		update
+			member
+		set
+			mem_name		= #{memName}
+			, mem_password	= #{memPassword}
+			, mem_reg1		= #{memReg1}
+			, mem_email		= #{memEmail}
+			, mem_tel		= #{memTel}
+			, mem_addr		= #{memAddr}
+		where mem_id = #{memId}
+	</update>
+	
+	<update id="withdraw" parameterType="MemberVO">
+		update
+			member
+		set
+			mem_wd			= 'Y'
+			, mem_wd_date	= CURDATE()
+		where mem_id = #{memId}
+	</update>
+	
+	<delete id="deleteAuth" parameterType="string">
+		delete from member_auth
+		where mem_id = #{memId}
+	</delete>
+	
+	<delete id="delete" parameterType="string">
+		delete from member
+		where mem_id = #{memId}
+	</delete>
+	
+	<select id="selectMember" resultType="MemberVO">
+		SELECT
+			m.mem_id
+			, mem_name
+			, mem_password
+			, mem_reg1
+			, mem_email
+			, mem_tel
+			, mem_addr
+			, mem_agr
+			, mem_wd
+			, mem_wd_date
+			, auth
+		FROM member AS m, member_auth AS ma
+		WHERE m.MEM_ID = ma.MEM_ID
+		AND mem_wd_date = subdate(CURDATE(), INTERVAL 7 DAY)
+	</select>
+	
+	<select id="memberCnt" parameterType="paging" resultType="int">
+		SELECT
+			count(*)
+		FROM member
+			JOIN member_auth ON member.MEM_ID = member_auth.MEM_ID
+		WHERE 1=1
+		<if test="searchType != null and searchType == 'name'">
+			AND mem_name LIKE CONCAT('%', #{searchWord}, '%')
+		</if>
+		<if test="searchType != null and searchType == 'auth'">
+			AND auth LIKE CONCAT('%', #{searchWord}, '%')
+		</if>
+	</select>
+	
+	<select id="pageList" parameterType="paging" resultType="MemberVO">
+		SELECT *
+		FROM (SELECT @rownum := @rownum + 1 AS rowNum, mem.*
+				FROM (SELECT member.*, auth
+						FROM member, member_auth
+						WHERE member.mem_id = member_auth.mem_id
+						<if test="searchType != null and searchType == 'name'">
+							AND mem_name LIKE CONCAT('%', #{searchWord}, '%')
+						</if>
+						<if test="searchType != null and searchType == 'auth'">
+							AND auth LIKE CONCAT('%', #{searchWord}, '%')
+						</if>
+				) mem, (SELECT @rownum := 0) r
+			) t
+		WHERE  1 = 1
+		<![CDATA[
+			AND rowNum >= #{startRow} AND rowNum <= #{endRow}
+		]]>
+	</select>
+
+</mapper>

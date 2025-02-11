@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="soft.euclid.intern.mapper.BoardMapper">
+
+	<select id="searchlist" parameterType="searchVO" resultType="boardVO">
+		select
+			bo_no
+			, bo_title
+			, bo_content
+			, bo_hit
+			, bo_reg_date
+			, mem_name
+		from board, member
+		where board.mem_id = member.mem_id
+		<if test="searchType != null and searchType == 'title'">
+			AND bo_title LIKE CONCAT('%', #{searchWord}, '%')
+		</if>
+		<if test="searchType != null and searchType == 'writer'">
+			AND mem_name LIKE CONCAT('%', #{searchWord}, '%')
+		</if>
+		 order by bo_no desc
+	</select>
+	
+	<select id="myList" parameterType="searchVO" resultType="boardVO">
+		select
+			bo_no
+			, bo_title
+			, bo_content
+			, bo_hit
+			, bo_reg_date
+			, mem_name
+		from board, member
+		where board.mem_id = #{memId}
+		<if test="searchType != null and searchType == 'title'">
+			AND  bo_title LIKE CONCAT('%', #{searchWord}, '%')
+		</if>
+		and board.mem_id = member.mem_id order by bo_no desc
+	</select>
+	
+	<insert id="insert" parameterType="boardVO">
+		insert into board (
+			bo_no
+			, bo_title
+			, bo_content
+			, bo_hit
+			, bo_reg_date
+			, mem_id
+		) values (
+			nextval(seq_board)
+			, #{boTitle}
+			, #{boContent}
+			, 0
+			, CURDATE()
+			, #{memId})
+	</insert>
+	
+	<insert id="insertFile" parameterType="fileVO">
+		<selectKey keyProperty="boNo"  resultType="int"  order="BEFORE">
+		 	SELECT MAX(bo_no) FROM board
+		</selectKey>
+		insert into attach (
+			file_no
+			, bo_no
+			, file_path
+			, file_size
+			, file_name
+			, file_originname
+			, file_mime
+			, file_fancysize
+		) values (
+			nextval(seq_attach)
+			, #{boNo}
+			, #{filePath}
+			, #{fileSize}
+			, #{fileName}
+			, #{fileOriginname}
+			, #{fileMime}
+			, #{fileFancysize})
+	</insert>
+	
+	<select id="selectBoard" parameterType="int"  resultType="boardVO">
+		select
+			bo_no
+			, bo_title
+			, bo_content
+			, bo_hit
+			, bo_reg_date
+			, mem_id
+		from board
+		where bo_no = #{boNo}
+	</select>
+	
+	<select id="selectFile" parameterType="int" resultType="fileVO">
+		select
+			file_no
+			, bo_no
+			, file_path
+			, file_size
+			, file_name
+			, file_originname
+			, file_mime
+			, file_fancysize
+		from attach
+		where bo_no = #{boNo}
+	</select>
+	
+	<select id="fileDownload" parameterType="int" resultType="fileVO">
+		select
+			file_no
+			, bo_no
+			, file_path
+			, file_size
+			, file_name
+			, file_originname
+			, file_mime
+			, file_fancysize
+		from attach
+		where file_no = #{fileNo}
+	</select>
+	
+	<select id="howManyFile" parameterType="int" resultType="int">
+		select
+			count(case when bo_no = #{boNo} then 1 end)
+		from attach
+	</select>
+		
+	<update id="increamentHit" parameterType="int" >
+		update
+			board
+		set
+			bo_hit = bo_hit + 1
+		where bo_no = #{boNo}
+	</update>
+	
+	<update id="update" parameterType="boardVO" >
+		update
+			board
+		set
+			bo_title = #{boTitle}, 
+			bo_content = #{boContent}
+		where bo_no = #{boNo}
+	</update>
+	
+	<delete id="deleteFilesWithBoard" parameterType="int">
+		delete from attach
+		where bo_no = #{boNo}
+	</delete>
+	
+	<delete id="delete" parameterType="int">
+		delete from board
+		where bo_no = #{boNo}
+	</delete>
+	
+	<select id="selectFileDelete" parameterType="int" resultType="fileVO">
+		select
+			file_no
+			, bo_no
+			, file_path
+			, file_size
+			, file_name
+			, file_originname
+			, file_mime
+			, file_fancysize
+		from attach
+		where file_no = #{fileNo}
+	</select>
+	
+	<delete id="fileDelete" parameterType="int" >
+		delete from attach
+		where file_no = #{fileNo}
+	</delete>
+	
+	<select id="readByUserId" parameterType="String" resultType="MemberVO">
+		select
+			m.mem_id
+			, mem_password
+			, mem_name
+			, mem_reg1
+			, mem_email
+			, mem_tel
+			, mem_addr
+			, mem_agr
+			, auth
+		from member m, member_auth ma where m.mem_id = ma.mem_id and m.mem_id = #{memId}
+	</select>
+	
+	<insert id="registerComment" parameterType="commentVO">
+		insert into comment (
+			bo_no
+			, co_no
+			, co_content
+			, co_date
+			, mem_id
+		) values (
+			#{boNo}
+			, nextval(seq_comment)
+			, #{coContent}
+			, SYSDATE()
+			, #{memId})
+	</insert>
+	
+	<select id="selectComment" parameterType="int" resultType="commentVO">
+		select
+			bo_no
+			, co_no
+			, co_content
+			, co_date
+			, mem_id
+		from comment
+		where bo_no = #{boNo}
+	</select>
+
+	<delete id="deleteComment" parameterType="int">
+		delete from comment
+		where co_no = #{coNo} 
+	</delete>
+
+	<delete id="deleteCommentsWithBoard" parameterType="int">
+		delete from comment
+		where bo_no = #{boNo} 
+	</delete>
+	
+</mapper>
